@@ -22,5 +22,10 @@
   "bugs": {
     "url": "https://github.com/ipbrennan90/raspi-proximity-cam/issues"
   },
-  "homepage": "https://github.com/ipbrennan90/raspi-proximity-cam#readme"
+  "homepage": "https://github.com/ipbrennan90/raspi-proximity-cam#readme",
+  "dependencies": {
+    "express": "^4.15.3",
+    "raspicam": "^0.2.14",
+    "rpio": "^0.9.17"
+  }
 }
