@@ -1,0 +1,26 @@
+{
+  "name": "raspi-proximity-cam",
+  "version": "1.0.0",
+  "description": "raspberry pi camera application that takes snapshots when it senses motion",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ipbrennan90/raspi-proximity-cam.git"
+  },
+  "keywords": [
+    "raspberry",
+    "pi",
+    "gpio",
+    "camera",
+    "raspicam"
+  ],
+  "author": "Ian Brennan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ipbrennan90/raspi-proximity-cam/issues"
+  },
+  "homepage": "https://github.com/ipbrennan90/raspi-proximity-cam#readme"
+}
