@@ -4,6 +4,7 @@ const rpio = require('rpio')
 const RaspiCam = require('raspicam')
 const axios = require('axios')
 const mkdirp = require('mkdirp')
+const rmdir = require('rmdir')
 const instance = axios.create({
   baseURL: process.env.LPR_URL,
   timeout: 1000,
@@ -14,7 +15,8 @@ const instance = axios.create({
   }
 })
 const cameraState = {
-  running: false
+  running: false,
+  lastDirPath: ''
 }
 
 function pollcb(pin) {
@@ -24,16 +26,15 @@ function pollcb(pin) {
   if (state === 'pressed' && !cameraState.running) {
     makeDirectory()
       .then(function(dir) {
-            const camera = new RaspiCam({      
-      mode: 'timelapse',
-      output: `${dir}/image_%06d.jpg`,
-      encoding: 'jpg',
-      timelapse: parseInt(process.env.PIC_INTERVAL) * 1000,
-      timeout: parseInt(process.env.TOTAL_TIMELAPSE) * 1000    
-    })
-    watchCamera(camera)
-    camera.start()
-      
+        const camera = new RaspiCam({
+          mode: 'timelapse',
+          output: `${dir}/image_%06d.jpg`,
+          encoding: 'jpg',
+          timelapse: parseInt(process.env.PIC_INTERVAL) * 1000,
+          timeout: parseInt(process.env.TOTAL_TIMELAPSE) * 1000
+        })
+        watchCamera(camera)
+        camera.start()
       })
       .catch(function(err) {
         console.log(err)
@@ -42,12 +43,13 @@ function pollcb(pin) {
 }
 function makeDirectory() {
   return new Promise(function(resolve, reject) {
-        const dateTaken = new Date()
-        const dir = `./photos/${dateTaken.getUTCMonth()}/${dateTaken.getUTCDate()}/${dateTaken.getUTCHours()}${dateTaken.getUTCMinutes()}${dateTaken.getUTCMilliseconds()}`
-        mkdirp(dir, function(err) {
-          if(err) reject(err)
-          else resolve(dir)
-        }) 
+    const dateTaken = new Date()
+    const dir = `./photos/${dateTaken.getUTCYear}/${dateTaken.getUTCMonth()}/${dateTaken.getUTCDate()}/${dateTaken.getUTCHours()}${dateTaken.getUTCMinutes()}${dateTaken.getUTCMilliseconds()}`
+    cameraState.lastDirPath = dir
+    mkdirp(dir, function(err) {
+      if (err) reject(err)
+      else resolve(dir)
+    })
   })
 }
 function watchCamera(camera) {
@@ -59,6 +61,13 @@ function watchCamera(camera) {
   })
   camera.on('exit', function(timestamp) {
     cameraState.running = false
+    setTimeout(2000, function() {
+      fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
+        console.log(dirs)
+        console.log(files)
+        console.log('all files are removed')
+      })
+    })
   })
 }
 
