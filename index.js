@@ -2,6 +2,11 @@ const rpio = require('rpio')
 const RaspiCam = require('raspicam')
 const express = require('express')
 const app = express()
+const axios = require('axios')
+const instance = axios.create({
+  baseURL: '192.168.9.107:3000',
+  timeout: 1000
+})
 
 function pollcb(pin) {
   var state = rpio.read(pin) ? 'pressed' : 'released'
@@ -35,6 +40,9 @@ var init = function() {
   console.log('initializing')
   rpio.open(16, rpio.INPUT, rpio.PULL_DOWN)
   rpio.poll(16, pollcb)
+  axios.get('/').then(function(response) {
+    console.log(response)
+  })
 }
 
 init()

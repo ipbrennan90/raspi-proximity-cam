@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/ipbrennan90/raspi-proximity-cam#readme",
   "dependencies": {
+    "axios": "^0.16.2",
     "express": "^4.15.3",
     "raspicam": "^0.2.14",
     "rpio": "^0.9.17"
