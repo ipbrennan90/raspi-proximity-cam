@@ -4,17 +4,17 @@ const express = require('express')
 const app = express()
 
 function pollcb(pin) {
-  const camera = new RaspiCam({
-    mode: 'timelapse',
-    output: `./photos/${new Date()}/image_%06d.jpg`,
-    encoding: 'jpg',
-    timelapse: 1000,
-    timeout: 5000
-  })
   var state = rpio.read(pin) ? 'pressed' : 'released'
   console.log(`button event on ${pin} currently ${state}`)
-  watchCamera(camera)
   if (state === 'pressed') {
+    const camera = new RaspiCam({
+      mode: 'timelapse',
+      output: `./photos/${new Date()}/image_%06d.jpg`,
+      encoding: 'jpg',
+      timelapse: 1000,
+      timeout: 5000
+    })
+    watchCamera(camera)
     camera.start()
   }
 }
