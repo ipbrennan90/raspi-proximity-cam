@@ -1,23 +1,27 @@
 const rpio = require('rpio')
 const RaspiCam = require('raspicam')
-const express = require('express')
-const app = express()
 const axios = require('axios')
 const instance = axios.create({
-  baseURL: '192.168.9.107:3000',
-  timeout: 1000
+  baseURL: process.env.LPR_URL,
+  timeout: 1000,
+  onUploadProgress: function(progressEvent) {
+    var percentCompleted = Math.round(
+      progressEvent.loaded * 100 / progressEvent.total
+    )
+  }
 })
 
 function pollcb(pin) {
   var state = rpio.read(pin) ? 'pressed' : 'released'
   console.log(`button event on ${pin} currently ${state}`)
   if (state === 'pressed') {
+    const dateTaken = new Date()
     const camera = new RaspiCam({
       mode: 'timelapse',
-      output: `./photos/${new Date()}/image_%06d.jpg`,
+      output: `./photos/${dateTaken.month}/${dateTaken.date}/${dateTaken.Hours}${dateTaken.minutes}image_%06d.jpg`,
       encoding: 'jpg',
-      timelapse: 1000,
-      timeout: 5000
+      timelapse: process.env.PIC_INTERVAL * 1000,
+      timeout: process.env.TOTAL_TIMELAPSE * 1000
     })
     watchCamera(camera)
     camera.start()
@@ -36,13 +40,21 @@ function watchCamera(camera) {
   })
 }
 
+function uploadImage(image) {
+  instance
+    .post('/upload', image)
+    .then(function(res) {
+      console.log(res)
+    })
+    .catch(function(err) {
+      console.log(err)
+    })
+}
+
 var init = function() {
   console.log('initializing')
   rpio.open(16, rpio.INPUT, rpio.PULL_DOWN)
   rpio.poll(16, pollcb)
-  axios.get('/').then(function(response) {
-    console.log(response)
-  })
 }
 
 init()
