@@ -1,5 +1,6 @@
 const rpio = require('rpio')
 const RaspiCam = require('raspicam')
+const express = require('express')
 const app = express()
 
 function pollcb(pin) {
