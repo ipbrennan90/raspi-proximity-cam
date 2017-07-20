@@ -6,11 +6,12 @@ const RaspiCam = require('raspicam')
 const axios = require('axios')
 const mkdirp = require('mkdirp')
 const rmdir = require('rmdir')
-const AdmZip = require('adm-zip')
+const zipFolder = require('zip-folder')
+const FormData = require('form-data')
 
 const instance = axios.create({
   baseURL: process.env.LPR_URL,
-  timeout: 1000,
+  timeout: 10000,
   onUploadProgress: function(progressEvent) {
     var percentCompleted = Math.round(
       progressEvent.loaded * 100 / progressEvent.total
@@ -44,10 +45,11 @@ function pollcb(pin) {
       })
   }
 }
+
 function makeDirectory() {
   return new Promise(function(resolve, reject) {
     const dateTaken = new Date()
-    const dir = `./photos/${dateTaken.getUTCYear}/${dateTaken.getUTCMonth()}/${dateTaken.getUTCDate()}/${dateTaken.getUTCHours()}${dateTaken.getUTCMinutes()}${dateTaken.getUTCMilliseconds()}`
+    const dir = `./photos/${dateTaken.getUTCMonth()}/${dateTaken.getUTCDate()}/${dateTaken.getUTCHours()}${dateTaken.getUTCMinutes()}${dateTaken.getUTCMilliseconds()}`
     cameraState.lastDirPath = dir
     mkdirp(dir, function(err) {
       if (err) reject(err)
@@ -56,10 +58,13 @@ function makeDirectory() {
   })
 }
 
-function buildZip(file) {
-  // prettier-ignore
-  let tmpFile = tmp.fileSync({ mode: 0644, postfix: '.zip'})
-  console.log("TEMP FILE CREATED: ", tmpFile.name)
+function buildZip(filePath, compressedFilePath) {
+  return new Promise(function(resolve, reject) {
+    zipFolder(cameraState.lastDirPath, compressedFilePath, function(err){
+      if (err) reject(err)
+      else resolve('boop be bop boop I\'m a computer')
+    })
+  })
 }
 
 function watchCamera(camera) {
@@ -71,24 +76,36 @@ function watchCamera(camera) {
   })
   camera.on('exit', function(timestamp) {
     cameraState.running = false
-    buildZip(null)
-      fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
-        console.log(dirs)
-        console.log(files)
-        console.log('all files are removed')
+    const tmpFile = tmp.fileSync({mode: 0644, postfix: '.zip'})
+    buildZip(cameraState.lastDirPath, tmpFile.name)
+      .then(function(_){
+        
+    uploadZip(tmpFile.name)
+      .then(function(res) {
+        if (res.status === 200) {
+          fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
+            console.log(dirs)
+            console.log(files)
+            console.log('all files are removed')
+          })
+        } else {
+          console.log(' STATUS NOT 200 ', res.status)
+        }
       })
+      .catch(function(err) {
+        console.log(err)
+      })
+})
   })
 }
 
-function uploadImage(image) {
-  instance
-    .post('/upload', image)
-    .then(function(res) {
-      console.log(res)
-    })
-    .catch(function(err) {
-      console.log(err)
-    })
+function uploadZip(zipBuffer) {
+  const formData = new FormData()
+  formData.append('license_plates', fs.createReadStream(zipBuffer))
+  formData.submit(`${process.env.LPR_URL}/upload-zip`, function(err, res) {
+    if(err) console.log(err)
+    else console.log(res)
+  })
 }
 
 var init = function() {
