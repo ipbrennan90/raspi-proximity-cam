@@ -1,10 +1,13 @@
 require('dotenv').config()
 const fs = require('fs')
+const tmp = require('tmp')
 const rpio = require('rpio')
 const RaspiCam = require('raspicam')
 const axios = require('axios')
 const mkdirp = require('mkdirp')
 const rmdir = require('rmdir')
+const AdmZip = require('adm-zip')
+
 const instance = axios.create({
   baseURL: process.env.LPR_URL,
   timeout: 1000,
@@ -52,6 +55,13 @@ function makeDirectory() {
     })
   })
 }
+
+function buildZip(file) {
+  // prettier-ignore
+  let tmpFile = tmp.fileSync({ mode: 0644, postfix: '.zip'})
+  console.log("TEMP FILE CREATED: ", tmpFile.name)
+}
+
 function watchCamera(camera) {
   camera.on('start', function(err, timestamp) {
     cameraState.running = true
@@ -61,6 +71,7 @@ function watchCamera(camera) {
   })
   camera.on('exit', function(timestamp) {
     cameraState.running = false
+    buildZip(null)
       fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
         console.log(dirs)
         console.log(files)
