@@ -56,10 +56,12 @@ function makeDirectory() {
   })
 }
 
-function buildZip(file) {
+function buildZip(filePath) {
   // prettier-ignore
-  let tmpFile = tmp.fileSync({ mode: 0644, postfix: '.zip'})
-  console.log("TEMP FILE CREATED: ", tmpFile.name)
+  const zip = new AdmZip()
+  zip.addFile(filePath)
+  let uploadBuffer = zip.toBuffer()
+  return uploadBuffer
 }
 
 function watchCamera(camera) {
@@ -71,26 +73,27 @@ function watchCamera(camera) {
   })
   camera.on('exit', function(timestamp) {
     cameraState.running = false
-    buildZip(null)
-    setTimeout(2000, function() {
-      fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
-        console.log(dirs)
-        console.log(files)
-        console.log('all files are removed')
+    let uploadBuffer = buildZip(camerState.lastDirPath)
+    uploadZip(uploadBuffer)
+      .then(function(res) {
+        if (res.status === 200) {
+          fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
+            console.log(dirs)
+            console.log(files)
+            console.log('all files are removed')
+          })
+        } else {
+          console.log(' STATUS NOT 200 ', res.status)
+        }
       })
-    })
+      .catch(function(err) {
+        console.log(err)
+      })
   })
 }
 
-function uploadImage(image) {
-  instance
-    .post('/upload', image)
-    .then(function(res) {
-      console.log(res)
-    })
-    .catch(function(err) {
-      console.log(err)
-    })
+function uploadZip(zipBuffer) {
+  return instance.post('/upload-zip', zipBuffer)
 }
 
 var init = function() {
