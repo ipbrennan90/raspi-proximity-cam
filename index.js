@@ -61,13 +61,11 @@ function watchCamera(camera) {
   })
   camera.on('exit', function(timestamp) {
     cameraState.running = false
-    setTimeout(2000, function() {
       fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
         console.log(dirs)
         console.log(files)
         console.log('all files are removed')
       })
-    })
   })
 }
 
