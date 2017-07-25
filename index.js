@@ -35,7 +35,8 @@ function pollcb(pin) {
           output: `${dir}/image_%06d.jpg`,
           encoding: 'jpg',
           timelapse: parseInt(process.env.PIC_INTERVAL) * 1000,
-          timeout: parseInt(process.env.TOTAL_TIMELAPSE) * 1000
+          timeout: parseInt(process.env.TOTAL_TIMELAPSE) * 1000,
+          exposure: 'sports'
         })
         watchCamera(camera)
         camera.start()
