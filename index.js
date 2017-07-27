@@ -16,8 +16,10 @@ const instance = axios.create({
     var percentCompleted = Math.round(
       progressEvent.loaded * 100 / progressEvent.total
     )
+    console.log(percentCompleted)
   }
 })
+
 const cameraState = {
   running: false,
   lastDirPath: ''
@@ -25,8 +27,6 @@ const cameraState = {
 
 function pollcb(pin) {
   var state = rpio.read(pin) ? 'pressed' : 'released'
-  console.log(`button event on ${pin} currently ${state}`)
-  console.log(process.env.PIC_INTERVAL, process.env.TOTAL_TIMELAPSE)
   if (state === 'pressed' && !cameraState.running) {
     makeDirectory()
       .then(function(dir) {
@@ -34,7 +34,7 @@ function pollcb(pin) {
           mode: 'timelapse',
           output: `${dir}/image_%06d.jpg`,
           encoding: 'jpg',
-          timelapse: parseInt(process.env.PIC_INTERVAL) * 1000,
+          timelapse: parseFloat(process.env.PIC_INTERVAL) * 1000,
           timeout: parseInt(process.env.TOTAL_TIMELAPSE) * 1000,
           ex: 'sports'
         })
@@ -83,15 +83,7 @@ function watchCamera(camera) {
         
     uploadZip(tmpFile.name)
       .then(function(res) {
-        if (res.status === 200) {
-          fs.rmdir(cameraState.lastDirPath, function(err, dirs, files) {
-            console.log(dirs)
-            console.log(files)
-            console.log('all files are removed')
-          })
-        } else {
-          console.log(' STATUS NOT 200 ', res.status)
-        }
+        console.log(res.status)
       })
       .catch(function(err) {
         console.log(err)
@@ -105,7 +97,14 @@ function uploadZip(zipBuffer) {
   formData.append('license_plates', fs.createReadStream(zipBuffer))
   formData.submit(`${process.env.LPR_URL}/upload-zip`, function(err, res) {
     if(err) console.log(err)
-    else console.log(res)
+    else console.log(res.statusCode)
+    if (res.statusCode === 200) {
+      rmdir(cameraState.lastDirPath, function(err, dirs, files) {
+        if(err) console.log(err)
+        console.log(dirs)
+        console.log(files)
+      })
+    } 
   })
 }
 
